@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNO Pro</title>
+
+<style>
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    text-align:center;
+    margin:0;
+}
+
+/* קופסה מרכזית */
+.game {
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+/* כותרת */
+h1 {
+    font-size:3rem;
+    margin-bottom:10px;
+}
+
+/* הודעות */
+#message {
+    margin:10px;
+    font-size:1.2rem;
+    opacity:0.9;
+}
+
+/* ידיים */
+.hand {
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:20px 0;
+}
+
+/* קלפים */
+.card {
+    width:80px;
+    height:120px;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.5rem;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+}
+
+.card:hover {
+    transform:translateY(-10px) scale(1.05);
+}
+
+/* צבעים */
+.red{background:#ff4d4d;}
+.blue{background:#4da6ff;}
+.green{background:#4dff88;}
+.yellow{background:#ffd24d; color:black;}
+
+.card-back{
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
+}
+
+/* מרכז */
+.center {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:15px;
+}
+
+/* כפתור */
+button {
+    padding:12px 25px;
+    border:none;
+    border-radius:25px;
+    background:linear-gradient(45deg,#ff7e5f,#feb47b);
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover {
+    transform:scale(1.1);
+}
+
+/* אזור קלף אמצע */
+#discard {
+    min-height:120px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+<h1>UNO 🔥</h1>
+
+<div id="message">בהצלחה!</div>
+
+<div id="ai-hand" class="hand"></div>
+
+<div class="center">
+    <button onclick="drawCard()">משוך קלף</button>
+    <div id="discard"></div>
+</div>
+
+<div id="player-hand" class="hand"></div>
+
+</div>
+
+<script>
+
+const colors = ['red','blue','green','yellow'];
+
+let playerHand = [];
+let aiHand = [];
+let discardCard = null;
+let currentTurn = 'player';
+
+function randomCard(){
+    return {
+        color: colors[Math.floor(Math.random()*4)],
+        value: Math.floor(Math.random()*10)
+    };
+}
+
+function createCardElement(card, clickable=true){
+    const el = document.createElement('div');
+    el.className = `card ${card.color}`;
+    el.textContent = card.value;
+
+    if(clickable){
+        el.onclick = ()=> playCard(card);
+    }
+
+    return el;
+}
+
+function render(){
+    const playerDiv = document.getElementById('player-hand');
+    const aiDiv = document.getElementById('ai-hand');
+    const discardDiv = document.getElementById('discard');
+
+    playerDiv.innerHTML='';
+    aiDiv.innerHTML='';
+    discardDiv.innerHTML='';
+
+    playerHand.forEach(card=>{
+        playerDiv.appendChild(createCardElement(card,true));
+    });
+
+    aiHand.forEach(()=>{
+        const back = document.createElement('div');
+        back.className='card card-back';
+        aiDiv.appendChild(back);
+    });
+
+    if(discardCard){
+        discardDiv.appendChild(createCardElement(discardCard,false));
+    }
+}
+
+function canPlay(card){
+    return card.color === discardCard.color || card.value === discardCard.value;
+}
+
+function playCard(card){
+    if(currentTurn !== 'player') return;
+
+    if(!canPlay(card)){
+        setMessage('❌ מהלך לא חוקי');
+        return;
+    }
+
+    playerHand = playerHand.filter(c=> c !== card);
+    discardCard = card;
+    currentTurn = 'ai';
+
+    render();
+    setTimeout(aiTurn,1000);
+}
+
+function drawCard(){
+    if(currentTurn !== 'player') return;
+
+    playerHand.push(randomCard());
+    render();
+}
+
+function aiTurn(){
+    let playable = aiHand.find(canPlay);
+
+    if(playable){
+        aiHand = aiHand.filter(c=>c !== playable);
+        discardCard = playable;
+        setMessage('🤖 המחשב שיחק');
+    } else {
+        aiHand.push(randomCard());
+        setMessage('🤖 המחשב משך קלף');
+    }
+
+    currentTurn = 'player';
+    render();
+}
+
+function setMessage(msg){
+    document.getElementById('message').textContent = msg;
+}
+
+function init(){
+    playerHand = [];
+    aiHand = [];
+
+    for(let i=0;i<7;i++){
+        playerHand.push(randomCard());
+        aiHand.push(randomCard());
+    }
+
+    discardCard = randomCard();
+    currentTurn = 'player';
+
+    render();
+}
+
+init();
+
+</script>
+
+</body>
+</html>
